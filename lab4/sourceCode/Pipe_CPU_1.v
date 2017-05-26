@@ -3,7 +3,7 @@
 //Student: 0411276 Chen Yi An
 //Student: 0413335 Kuo Yi Lin
 //--------------------------------------------
-module Simple_Single_CPU(
+module Pipe_CPU_1(
                 clk_i,
                 rst_i
                 );
@@ -136,7 +136,7 @@ assign instr_immdt = instr_IF[15:0];
 IF stage: Instruction Fetch
 */
 
-MUX_2to1 #(.size(32))Mux_PC_Source(
+MUX_2to1 #(.size(32)) Mux_PC_Source(
     .data0_i(branch_addr_MEM),
     .data1_i(pc_add4_IF),
     .select_i(PCSrc),
@@ -196,7 +196,7 @@ Reg_File RF(
 Decoder Control(
         //input 
         .instr_op_i(instr_op),
-        .instr_funct_i( instr_funct_ID), 
+        .instr_funct_i(instr_funct_ID), 
 
         //output 
         .ALU_op_o(AluOp_c_ID),   
@@ -225,7 +225,7 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
         MemWrite_c_ID
     }),
     .data1_i(3'b0),
-    .select_i(),
+    .select_i(1'b0),
     .data_o({
         RW_ID_muxOut,
         MR_ID_muxOut,
@@ -233,11 +233,10 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
     })
 );
 
-Pipe_Reg #(169) ID_EX(
+Pipe_Reg #(.size(165)) ID_EX(
     .clk_i(clk_i),
     .rst_i(1'b1),//connect to hazard detection unit after implemented it
     .data_i({   
-        aluOpCode_ID,           //4
         //control signals
         AluSrc_c_ID,            //1
         AluOp_c_ID,             //4
@@ -261,7 +260,6 @@ Pipe_Reg #(169) ID_EX(
         instr_shamt_ID          //5            
     }),
     .data_o({
-        aluOpCode_EX,
         /*control signal*/
         AluSrc_c_EX,
         AluOp_c_EX,
@@ -469,5 +467,3 @@ MUX_2to1 #(.size(32)) Mux_WriteBack(
 
 endmodule
                   
-
-

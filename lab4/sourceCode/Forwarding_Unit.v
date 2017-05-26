@@ -15,6 +15,7 @@ module Forwarding_Unit(
 
     input MEM_RegWrite,
     input WB_RegWrite,
+	
     output ForwardA,
     output ForwardB
 );
@@ -27,14 +28,14 @@ wire EX_RegWrite, WB_RegWrite;
 
 reg [1:0] ForwardA, ForwardB; 
 
-//ForwardA
+/* ForwardA */
 always @(*) begin
-    //EX hazard
+    // EX hazard
     if( MEM_RegWrite 
         and ( MEM_RegisterRd != 0 )
         and ( MEM_RegisterRd == EX_RegisterRs ) 
     )   ForwardA = FORWARD_FROM_MEM;
-    //MEM hazard
+    // MEM hazard
     else if(
         WB_RegWrite
         and ( WB_RsgisterRd != 0)
@@ -46,24 +47,23 @@ always @(*) begin
         ForwardA = FORWARD_NO;
 end
 
-//ForwardB
+/* ForwardB */
 always @(*) begin
-    //EX hazard
+    // EX hazard
     if( MEM_RegWrite 
         and ( MEM_RegisterRd != 0 )
         and ( MEM_RegisterRd == EX_RegisterRt ) 
     )   ForwardB = FORWARD_FROM_MEM;
-    //MEM hazard
+    // MEM hazard
     else if(
         WB_RegWrite
         and ( WB_RsgisterRd != 0)
         and ( not( MEM_RegWrite and (MEM_RegisterRd!=0 ) ) 
                and MEM_RegisterRd != EX_RegisterRt )
         and ( WB_RsgisterRd == EX_RegisterRt )
-    )   ForwardB = FORWARD_FROM_WB
+    )   ForwardB = FORWARD_FROM_WB;
     else 
         ForwardB = FORWARD_NO;
 end
-
 
 endmodule

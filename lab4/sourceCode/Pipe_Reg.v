@@ -18,7 +18,7 @@ input		[size-1: 0]	data_i;
 output reg	[size-1: 0]	data_o;
 
 always @(posedge clk_i) begin
-    if(~rst_i) //rst_i == 0 表示清空
+    if(~rst_i) //rst_i == 0 means clear
         data_o <= 0;
     else
         data_o <= data_i;

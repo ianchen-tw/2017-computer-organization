@@ -27,5 +27,3 @@ always @(*)begin
     data_o <=  select_i==0? data0_i : data1_i ;
 end
 endmodule      
-          
-          

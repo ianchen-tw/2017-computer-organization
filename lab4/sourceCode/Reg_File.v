@@ -60,10 +60,3 @@ always @( negedge rst_i or posedge clk_i  ) begin
 end
 
 endmodule     
-
-
-
-
-
-                    
-                    

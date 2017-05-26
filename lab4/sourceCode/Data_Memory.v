@@ -108,4 +108,3 @@ always@(addr_i or MemRead_i) begin
 end
 
 endmodule
-
