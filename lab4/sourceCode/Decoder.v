@@ -11,7 +11,7 @@ output	reg [4-1:0]	ALU_op_o,
 output	reg					ALUSrc_o,
 output	reg					RegDst_o,
 output	reg					Branch_o,
-output	reg [2-1:0]	MemToReg_o,
+output	reg 					MemToReg_o,
 output	reg					MemRead_o,
 output	reg					MemWrite_o
 	);
@@ -43,8 +43,8 @@ Specify the mux selection value which determined
 This selective value is a must-be if writing back to RegisterFile is needed 
 ------------------------------------------------------------------------------*/
 //MToR: MemtoReg_o 
-parameter MToR_ALU 		= 2'd0;
-parameter MToR_MEM 		= 2'd1; 
+parameter MToR_ALU 		= 1'd0;
+parameter MToR_MEM 		= 1'd1; 
 
 parameter ALU_SRC_REG 	= 1'b0;
 parameter ALU_SRC_IMMDT = 1'b1;
@@ -105,7 +105,7 @@ parameter DONTCARE4 = 4'bxxxx;
 		  end
 
 		6'd15:begin //LUI 
-                    //�要修alu_op_o �alu_control �代�� 以�alu 中新�lui 專屬行為 
+                    //��修alu_op_o �alu_control �代�� 以�alu 中新�lui 專屬行為 
 			ALU_op_o                  <= 4'd8; 
 			ALUSrc_o                  <= ALU_SRC_IMMDT;
 			{ RegWrite_o, RegDst_o }  <= REG_WRITE_SRC_RT;
@@ -134,7 +134,7 @@ parameter DONTCARE4 = 4'bxxxx;
 			Branch_o <= 1'b0;
 		  end
 		default: 
-			{ALU_op_o,ALUSrc_o,RegWrite_o,RegDst_o,MemToReg_o,MemRead_o, MemWrite_o,Branch_o} <= 'bx ; 
+			{ALU_op_o,ALUSrc_o,RegWrite_o,RegDst_o,MemToReg_o,MemRead_o, MemWrite_o,Branch_o} <= 'b0 ; 
 			
 	  endcase
 	end

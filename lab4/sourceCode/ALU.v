@@ -11,7 +11,7 @@ input		[4-1:0]   ctrl_i,
 input		[5-1:0]   shamt,
 //input		[32-1:0]  pc_add4,//for "jal" instruciton
 output  reg	[32-1:0]  result_o,
-output	wire          zero_o
+output	reg          zero_o
 	);
      
 
@@ -39,12 +39,14 @@ parameter ALU_MULT = 4'd11;
 
 
 //Main function
-assign zero_o = (result_o ==0) ? 1'b1 :1'b0 ;
 assign signed_src1 = src1_i;
 assign signed_src2 = src2_i;
 assign unsigned_src1 = src1_i;
 assign unsigned_src2 = src2_i;
 
+always @(*)begin
+	zero_o <= (result_o ==0) ? 1'b1 :1'b0 ;
+end
 
 always @( *)begin
   case (ctrl_i)
@@ -61,7 +63,7 @@ always @( *)begin
 		ALU_ORI 	: result_o = src1_i | { 16'b0,src2_i[15:0]} ;
 		ALU_MULT	: result_o = src1_i * src2_i ;
 	default: 
-		result_o = 32'bx;//Dont care, since the control is not specified  
+		result_o = 'bx;
   endcase 
 end
 

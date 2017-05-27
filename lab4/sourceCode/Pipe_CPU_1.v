@@ -91,14 +91,15 @@ wire [32-1:0]   regWB_data,     //The data writed back to RegisterFile, if any.
                 shiftout; 
 
 wire [32-1:0] pc_add4_ID,pc_add4_EX;
+wire [32-1:0] pc_add4_MEM,pc_add4_WB;//For debug usage 
 wire [32-1:0] branch_addr_EX,branch_addr_MEM;//Mux_PC_Source's input
 wire [32-1:0] RF_outRS_ID, RF_outRS_EX;
-wire [32-1:0] RF_outRT_ID, RF_outRT_EX;
+wire [32-1:0] RF_outRT_ID, RF_outRT_EX, RF_outRT_MEM;
 wire [32-1:0] immdt16_SE32_ID, immdt16_SE32_EX; 
 
 wire [32-1:0] instr_ID;//values from instruction memory according to it's address
-wire [1:0]	ForawrdA, ForwardB; 
-wire 		pcWirte,	alu_zero_EX,	alu_zero_MEM; 
+wire [1:0]	ForwardA, ForwardB; 
+wire 		pcWrite,	alu_zero_EX,	alu_zero_MEM; 
 
 wire [4-1:0]      aluOpCode_EX;      //The operation code that ALU get from ALU_Control  
 wire [5-1:0]      writeReg_addr_EX,writeReg_addr_MEM, writeReg_addr_WB ;  //The address of the reg that need to be write back, if any.
@@ -112,15 +113,15 @@ wire    [16-1:0] instr_immdt;
 wire 	IF_Flush, ID_Flush, EX_Flush ; 
 
 assign { instr_op, instr_rs_ID, instr_rt_ID, instr_rd_ID, instr_shamt_ID, instr_funct_ID } = instr_ID;
-assign instr_immdt = instr_IF[15:0];
+assign instr_immdt = instr_ID[15:0];
 
 /**
 IF stage: Instruction Fetch
 */
 
 MUX_2to1 #(.size(32)) Mux_PC_Source(
-    .data0_i(branch_addr_MEM),
-    .data1_i(pc_add4_IF),
+    .data0_i(pc_add4_IF),
+    .data1_i(branch_addr_MEM),
     .select_i(PCSrc),
     .data_o(pc_next)
 );
@@ -128,7 +129,7 @@ MUX_2to1 #(.size(32)) Mux_PC_Source(
 ProgramCounter PC(
         .clk_i(clk_i),      
         .rst_i (rst_i),
-        .pcWrite(pcWirte),
+        .pcWrite(pcWrite),
         .pc_in_i(pc_next),
         .pc_out_o(pc_data) 
         );
@@ -148,7 +149,8 @@ Instr_Memory IM(
 
 Pipe_Reg #(.size(64)) IF_ID(
     .clk_i(clk_i),
-    .rst_i( rst_i | ~IF_Flush), //connect to IF flush
+	.rst_i( rst_i),
+    //.rst_i( rst_i | ~IF_Flush), //connect to IF flush
     .data_i({   
         pc_add4_IF,
         instr_IF
@@ -166,7 +168,7 @@ Hazard_detection_Unit Hazard_detection_Unit(
 	.ID_RegisterRt(instr_rt_ID),
 	.EX_RegisterRt(instr_rt_EX),
 	.MEM_Branch(Branch_c_MEM),
-	.PCWrite(pcWirte),
+	.PCWrite(pcWrite),
 	.IF_Flush(IF_Flush),
 	.ID_Flush(ID_Flush),
 	.EX_Flush(EX_Flush)
@@ -183,7 +185,7 @@ Reg_File RF(
         .RTaddr_i(instr_rt_ID) ,  
         .RDaddr_i(writeReg_addr_WB) ,  
         .RDdata_i(regWB_data)  , 
-        .RegWrite_i (RegWrite_c_ID),
+        .RegWrite_i (RegWrite_c_WB),
         .RSdata_o(RF_outRS_ID) ,  
         .RTdata_o(RF_outRT_ID)   
         );
@@ -219,7 +221,8 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
         MemWrite_c_ID
     }),
     .data1_i(3'b0),
-    .select_i(ID_Flush),
+	.select_i(1'b0),
+    //.select_i(ID_Flush),
     .data_o({
         RW_ID_muxOut,
         MR_ID_muxOut,
@@ -308,7 +311,7 @@ Forwarding_Unit  Forwarding_Unit(
 	.WB_RsgisterRd(writeReg_addr_WB),
 	.MEM_RegWrite(RegWrite_c_MEM),
 	.WB_RegWrite(RegWrite_c_WB),
-	.ForwardA(ForawrdA),
+	.ForwardA(ForwardA),
 	.ForwardB(ForwardB)
 );
 
@@ -316,14 +319,16 @@ MUX_3to1 #(.size(32)) Mux_ALUSrc1_forwarding(
     .data0_i( RF_outRS_EX),
     .data1_i( aluResult_MEM ),
     .data2_i( regWB_data ),
-    .select_i(ForawrdA), //connedted from Frowarding Unit
+	.select_i(2'b00),
+    //.select_i(ForwardA), //connedted from Frowarding Unit
 	.data_o( aluSrc1)
 );
 MUX_3to1 #(.size(32)) Mux_ALUSrc2_forwarding(
     .data0_i( RF_outRT_EX ),
     .data1_i( aluResult_MEM),
     .data2_i( regWB_data ),
-    .select_i(ForwardB),//connedted from Frowarding Unit
+	.select_i(2'b00),
+    //.select_i(ForwardB),//connedted from Frowarding Unit
 	 .data_o( aluSrc2_reg_EX)
 );
 MUX_2to1 #(.size(32)) Mux_ALUSrc2(
@@ -358,7 +363,8 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
         MemWrite_c_EX
     }),
     .data1_i(3'b0),
-    .select_i(EX_Flush),
+	.select_i(1'b0),
+    //.select_i(EX_Flush),
     .data_o({
         RW_EX_muxOut,
         MR_EX_muxOut,
@@ -366,7 +372,7 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
     })
 );
 
-Pipe_Reg #(.size(107)) EX_MEM(
+Pipe_Reg #(.size(171)) EX_MEM(
     .clk_i(clk_i),
     .rst_i(rst_i),
     .data_i({   
@@ -379,11 +385,13 @@ Pipe_Reg #(.size(107)) EX_MEM(
         MW_EX_muxOut,               //1
 
         //data fields 
+		pc_add4_EX,				//32
         aluResult_EX,               //32
         alu_zero_EX,                //1
         writeReg_addr_EX,           //5
         aluSrc2_reg_EX,             //32
-        branch_addr_EX             //32
+        branch_addr_EX,             //32
+		RF_outRT_EX			//32
     }),
     .data_o({
         /*control signals*/
@@ -394,11 +402,13 @@ Pipe_Reg #(.size(107)) EX_MEM(
         MemRead_c_MEM,
         MemWrite_c_MEM,
         
+		pc_add4_MEM,
         aluResult_MEM,
         alu_zero_MEM,
         writeReg_addr_MEM,
         aluSrc2_reg_MEM, 
-        branch_addr_MEM
+        branch_addr_MEM,
+		RF_outRT_MEM
     })
 );
 
@@ -406,12 +416,12 @@ Pipe_Reg #(.size(107)) EX_MEM(
 /**
 MEM stage : Memory 
 */
-assign PCSrc = Branch_c_MEM & alu_zero_MEM; 
+assign PCSrc = Branch_c_MEM && alu_zero_MEM; 
 
 Data_Memory DM(
         .clk_i(clk_i),
         .addr_i(aluResult_MEM),
-        .data_i(aluSrc2_reg_MEM),
+        .data_i(RF_outRT_MEM),
         .MemRead_i( MemRead_c_MEM),
         .MemWrite_i(MemWrite_c_MEM),
         .data_o(MemRead_data_MEM)        
@@ -419,7 +429,7 @@ Data_Memory DM(
 
 //MEM stage END 
 
-Pipe_Reg #(.size(71)) MEM_WB(
+Pipe_Reg #(.size(103)) MEM_WB(
     .clk_i(clk_i),
     .rst_i(rst_i),// not completed yet
 	 .data_i({   
@@ -428,6 +438,7 @@ Pipe_Reg #(.size(71)) MEM_WB(
 		RegWrite_c_MEM,			//1
 
         //data fields
+		pc_add4_MEM,			//32
         writeReg_addr_MEM,          //5
         MemRead_data_MEM,           //32
         aluResult_MEM               //32
@@ -440,6 +451,7 @@ Pipe_Reg #(.size(71)) MEM_WB(
 		RegWrite_c_WB,
         
         //data Fields 
+		pc_add4_WB,
         writeReg_addr_WB,
         MemRead_data_WB, 
         aluResult_WB
@@ -452,8 +464,8 @@ WB stage : Write Back
 */
 
 MUX_2to1 #(.size(32)) Mux_WriteBack(
-    .data0_i(MemRead_data_WB),
-    .data1_i(aluResult_WB),
+    .data0_i(aluResult_WB),
+    .data1_i(MemRead_data_WB),
     .select_i(MemToReg_c_WB),
     .data_o(regWB_data)
 );

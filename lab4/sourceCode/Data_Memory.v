@@ -81,6 +81,7 @@ assign  memory[31] = {Mem[127], Mem[126], Mem[125], Mem[124]};
 initial begin
 	for(i=0; i<128; i=i+1)
 		Mem[i] = 8'b0;
+	/*
 	Mem[0] = 8'b0100;
 	Mem[4] = 8'b0101;
 	Mem[8] = 8'b0110;
@@ -91,6 +92,7 @@ initial begin
 	Mem[28] = 8'b0010;
 	Mem[32] = 8'b0001;
 	Mem[36] = 8'b0011;
+	*/
 end 
 
 always@(posedge clk_i) begin
