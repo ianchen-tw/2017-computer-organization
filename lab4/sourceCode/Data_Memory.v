@@ -105,6 +105,8 @@ end
 always@(addr_i or MemRead_i) begin
 	if(MemRead_i)
 		data_o = {Mem[addr_i+3], Mem[addr_i+2], Mem[addr_i+1], Mem[addr_i]};
+	else 
+		data_o = 'bx;
 end
 
 endmodule
