@@ -6,7 +6,6 @@
 
 module Decoder(
 input	    	[6-1:0] instr_op_i,
-input       [6-1:0] instr_funct_i, 
 output	reg 				RegWrite_o,
 output	reg [4-1:0]	ALU_op_o,
 output	reg					ALUSrc_o,
