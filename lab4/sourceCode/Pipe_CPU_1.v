@@ -77,7 +77,6 @@ WB stage
 
 //control signal
 //MEM
-wire MemRead_c_WB,   MemWrite_c_WB;
 wire MemToReg_c_WB;
 //WB
 wire RegWrite_c_WB ;
@@ -88,46 +87,29 @@ wire [32-1:0]   regWB_data,     //The data writed back to RegisterFile, if any.
                 MemRead_data_MEM, MemRead_data_WB, 
                 aluResult_EX, aluResult_MEM,aluResult_WB,
                 aluSrc1,        aluSrc2, //input for alu. 
-                aluSrc2_reg_EX, aluSrc2_reg_MEM,
-                jump_addr,              //The jump address, if any                   
-                //immdt16_SE32,   //32bit Signed Extened value derived from the 16bit immediate one    
-                shiftout,
-                Mux_Branch_or_PCAdd4_out; 
+                aluSrc2_reg_EX, aluSrc2_reg_MEM,  
+                shiftout; 
 
-
-wire [32-1:0] pc_add4_ID;
-wire [32-1:0] pc_add4_EX;
+wire [32-1:0] pc_add4_ID,pc_add4_EX;
 wire [32-1:0] branch_addr_EX,branch_addr_MEM;//Mux_PC_Source's input
-
-
 wire [32-1:0] RF_outRS_ID, RF_outRS_EX;
 wire [32-1:0] RF_outRT_ID, RF_outRT_EX;
-wire [32-1:0] RF_outRD_ID, RF_outRD_EX, RF_outRD_MEM, RF_outRD_WB;
-
-
 wire [32-1:0] immdt16_SE32_ID, immdt16_SE32_EX; 
 
 wire [32-1:0] instr_ID;//values from instruction memory according to it's address
+wire [1:0]	ForawrdA, ForwardB; 
+wire 		pcWirte,	alu_zero_EX,	alu_zero_MEM; 
 
-
-wire            alu_zero_EX,alu_zero_MEM,       //Indicate the value of alu is zero or not (for branch usage )
-                alu_mux_branch, //The output of "Mux_ALU_Branch_type",This signal represents the alu's evaluation outcome 
-                                        //that to branch or not.
-
-                pcBranch_sel;   //Selecting value for Mux_PC_Source 
-
-wire [4-1:0]      aluOpCode_ID, aluOpCode_EX;      //The operation code that ALU get from ALU_Control  
+wire [4-1:0]      aluOpCode_EX;      //The operation code that ALU get from ALU_Control  
 wire [5-1:0]      writeReg_addr_EX,writeReg_addr_MEM, writeReg_addr_WB ;  //The address of the reg that need to be write back, if any.
-
 
 //Indicate the meaning of the sub-sections in the instruction field     
 wire    [32-1:0] instr_IF; 
 wire    [5-1:0] instr_rs_ID,  instr_rt_ID,  instr_rd_ID, instr_shamt_ID;
 wire    [5-1:0] instr_rs_EX,  instr_rt_EX,  instr_rd_EX, instr_shamt_EX;
-wire    [5-1:0] instr_rs_MEM,  instr_rt_MEM,  instr_rd_MEM, instr_shamt_MEM;
 wire    [6-1:0] instr_op,instr_funct_ID, instr_funct_EX;
 wire    [16-1:0] instr_immdt;
-
+wire 	IF_Flush, ID_Flush, EX_Flush ; 
 
 assign { instr_op, instr_rs_ID, instr_rt_ID, instr_rd_ID, instr_shamt_ID, instr_funct_ID } = instr_ID;
 assign instr_immdt = instr_IF[15:0];
@@ -146,7 +128,7 @@ MUX_2to1 #(.size(32)) Mux_PC_Source(
 ProgramCounter PC(
         .clk_i(clk_i),      
         .rst_i (rst_i),
-        .pcWrite(1'b1), //connect this after implementing hazard dection unit
+        .pcWrite(pcWirte),
         .pc_in_i(pc_next),
         .pc_out_o(pc_data) 
         );
@@ -166,7 +148,7 @@ Instr_Memory IM(
 
 Pipe_Reg #(.size(64)) IF_ID(
     .clk_i(clk_i),
-    .rst_i(1'b1), //connect to IF flush
+    .rst_i( rst_i | ~IF_Flush), //connect to IF flush
     .data_i({   
         pc_add4_IF,
         instr_IF
@@ -175,6 +157,19 @@ Pipe_Reg #(.size(64)) IF_ID(
         pc_add4_ID,
         instr_ID
     })
+);
+
+
+Hazard_detection_Unit Hazard_detection_Unit(
+	.EX_MemRead(MemRead_c_EX),
+	.ID_RegisterRs(instr_rs_ID),
+	.ID_RegisterRt(instr_rt_ID),
+	.EX_RegisterRt(instr_rt_EX),
+	.MEM_Branch(Branch_c_MEM),
+	.PCWrite(pcWirte),
+	.IF_Flush(IF_Flush),
+	.ID_Flush(ID_Flush),
+	.EX_Flush(EX_Flush)
 );
 
 
@@ -196,7 +191,6 @@ Reg_File RF(
 Decoder Control(
         //input 
         .instr_op_i(instr_op),
-        .instr_funct_i(instr_funct_ID), 
 
         //output 
         .ALU_op_o(AluOp_c_ID),   
@@ -225,7 +219,7 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
         MemWrite_c_ID
     }),
     .data1_i(3'b0),
-    .select_i(1'b0),
+    .select_i(ID_Flush),
     .data_o({
         RW_ID_muxOut,
         MR_ID_muxOut,
@@ -235,7 +229,7 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
 
 Pipe_Reg #(.size(165)) ID_EX(
     .clk_i(clk_i),
-    .rst_i(1'b1),//connect to hazard detection unit after implemented it
+    .rst_i(rst_i),//connect to hazard detection unit after implemented it
     .data_i({   
         //control signals
         AluSrc_c_ID,            //1
@@ -307,19 +301,29 @@ Adder Branch_adder(
         );
 
 //Forwarding control 
-//not completed 
+Forwarding_Unit  Forwarding_Unit(
+	.EX_RegisterRs(instr_rs_EX),
+	.EX_RegisterRt(instr_rt_EX),
+	.MEM_RegisterRd(writeReg_addr_MEM),
+	.WB_RsgisterRd(writeReg_addr_WB),
+	.MEM_RegWrite(RegWrite_c_MEM),
+	.WB_RegWrite(RegWrite_c_WB),
+	.ForwardA(ForawrdA),
+	.ForwardB(ForwardB)
+);
+
 MUX_3to1 #(.size(32)) Mux_ALUSrc1_forwarding(
     .data0_i( RF_outRS_EX),
     .data1_i( aluResult_MEM ),
     .data2_i( regWB_data ),
-    .select_i(2'b0), //connedted from Frowarding Unit
-	 .data_o( aluSrc1)
+    .select_i(ForawrdA), //connedted from Frowarding Unit
+	.data_o( aluSrc1)
 );
 MUX_3to1 #(.size(32)) Mux_ALUSrc2_forwarding(
     .data0_i( RF_outRT_EX ),
     .data1_i( aluResult_MEM),
     .data2_i( regWB_data ),
-    .select_i(2'b0),//connedted from Frowarding Unit
+    .select_i(ForwardB),//connedted from Frowarding Unit
 	 .data_o( aluSrc2_reg_EX)
 );
 MUX_2to1 #(.size(32)) Mux_ALUSrc2(
@@ -354,7 +358,7 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
         MemWrite_c_EX
     }),
     .data1_i(3'b0),
-    .select_i(1'b0),
+    .select_i(EX_Flush),
     .data_o({
         RW_EX_muxOut,
         MR_EX_muxOut,
@@ -362,9 +366,9 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
     })
 );
 
-Pipe_Reg #(.size(122)) EX_MEM(
+Pipe_Reg #(.size(107)) EX_MEM(
     .clk_i(clk_i),
-    .rst_i(1'b1),
+    .rst_i(rst_i),
     .data_i({   
         //control signals
         Branch_c_EX,                //1
@@ -379,11 +383,7 @@ Pipe_Reg #(.size(122)) EX_MEM(
         alu_zero_EX,                //1
         writeReg_addr_EX,           //5
         aluSrc2_reg_EX,             //32
-        branch_addr_EX,             //32
-        
-        instr_rs_EX,                //5, this field might be useless? 
-        instr_rt_EX,                //5
-        instr_rd_EX                 //5
+        branch_addr_EX             //32
     }),
     .data_o({
         /*control signals*/
@@ -398,10 +398,7 @@ Pipe_Reg #(.size(122)) EX_MEM(
         alu_zero_MEM,
         writeReg_addr_MEM,
         aluSrc2_reg_MEM, 
-        branch_addr_MEM,
-        instr_rs_MEM,
-        instr_rt_MEM,
-        instr_rd_MEM
+        branch_addr_MEM
     })
 );
 
@@ -411,7 +408,7 @@ MEM stage : Memory
 */
 assign PCSrc = Branch_c_MEM & alu_zero_MEM; 
 
-Data_Memory Data_Memory(
+Data_Memory DM(
         .clk_i(clk_i),
         .addr_i(aluResult_MEM),
         .data_i(aluSrc2_reg_MEM),
@@ -422,14 +419,13 @@ Data_Memory Data_Memory(
 
 //MEM stage END 
 
-Pipe_Reg #(.size(72)) MEM_WB(
+Pipe_Reg #(.size(71)) MEM_WB(
     .clk_i(clk_i),
-    .rst_i(1'b1),// not completed yet
+    .rst_i(rst_i),// not completed yet
 	 .data_i({   
         //control signals
-        MemRead_c_MEM,              //1
-        MemWrite_c_MEM,             //1
         MemToReg_c_MEM,             //1
+		RegWrite_c_MEM,			//1
 
         //data fields
         writeReg_addr_MEM,          //5
@@ -440,9 +436,8 @@ Pipe_Reg #(.size(72)) MEM_WB(
 		  }),
     .data_o({
         /*decoder control signal*/
-        MemRead_c_WB,
-        MemWrite_c_WB,
         MemToReg_c_WB,
+		RegWrite_c_WB,
         
         //data Fields 
         writeReg_addr_WB,
