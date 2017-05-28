@@ -29,12 +29,22 @@ output [32-1:0] RTdata_o;
 
 //Internal signals/registers           
 reg  signed [32-1:0] Reg_File [0:32-1];     //32 word registers
-wire        [32-1:0] RSdata_o;
-wire        [32-1:0] RTdata_o;
+reg       [32-1:0] RSdata_o;
+reg        [32-1:0] RTdata_o;
 
 //Read the data
-assign RSdata_o = Reg_File[RSaddr_i] ;
-assign RTdata_o = Reg_File[RTaddr_i] ;   
+
+/*assign RSdata_o = Reg_File[RSaddr_i] ;
+assign RTdata_o = Reg_File[RTaddr_i] ;  */ 
+always @( *)begin
+	if(RegWrite_i&&(RSaddr_i == RDaddr_i))	RSdata_o<= RDdata_i;
+	else RSdata_o <= Reg_File[RSaddr_i];
+end
+always @( *)begin
+	if(RegWrite_i&&(RTaddr_i == RDaddr_i))	RTdata_o<= RDdata_i;
+	else RTdata_o <= Reg_File[RTaddr_i];
+end
+
 
 //Writing data when postive edge clk_i and RegWrite_i was set.
 

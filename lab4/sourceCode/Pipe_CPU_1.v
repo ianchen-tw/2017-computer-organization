@@ -94,7 +94,7 @@ wire [32-1:0] pc_add4_ID,pc_add4_EX;
 wire [32-1:0] pc_add4_MEM,pc_add4_WB;//For debug usage 
 wire [32-1:0] branch_addr_EX,branch_addr_MEM;//Mux_PC_Source's input
 wire [32-1:0] RF_outRS_ID, RF_outRS_EX;
-wire [32-1:0] RF_outRT_ID, RF_outRT_EX, RF_outRT_MEM;
+wire [32-1:0] RF_outRT_ID, RF_outRT_EX;
 wire [32-1:0] immdt16_SE32_ID, immdt16_SE32_EX; 
 
 wire [32-1:0] instr_ID;//values from instruction memory according to it's address
@@ -319,16 +319,16 @@ MUX_3to1 #(.size(32)) Mux_ALUSrc1_forwarding(
     .data0_i( RF_outRS_EX),
     .data1_i( aluResult_MEM ),
     .data2_i( regWB_data ),
-	.select_i(2'b00),
-    //.select_i(ForwardA), //connedted from Frowarding Unit
+	//.select_i(2'b00),
+    .select_i(ForwardA), //connedted from Frowarding Unit
 	.data_o( aluSrc1)
 );
 MUX_3to1 #(.size(32)) Mux_ALUSrc2_forwarding(
     .data0_i( RF_outRT_EX ),
     .data1_i( aluResult_MEM),
     .data2_i( regWB_data ),
-	.select_i(2'b00),
-    //.select_i(ForwardB),//connedted from Frowarding Unit
+	//.select_i(2'b00),
+    .select_i(ForwardB),//connedted from Frowarding Unit
 	 .data_o( aluSrc2_reg_EX)
 );
 MUX_2to1 #(.size(32)) Mux_ALUSrc2(
@@ -372,7 +372,7 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
     })
 );
 
-Pipe_Reg #(.size(171)) EX_MEM(
+Pipe_Reg #(.size(139)) EX_MEM(
     .clk_i(clk_i),
     .rst_i(rst_i),
     .data_i({   
@@ -390,8 +390,7 @@ Pipe_Reg #(.size(171)) EX_MEM(
         alu_zero_EX,                //1
         writeReg_addr_EX,           //5
         aluSrc2_reg_EX,             //32
-        branch_addr_EX,             //32
-		RF_outRT_EX			//32
+        branch_addr_EX             //32
     }),
     .data_o({
         /*control signals*/
@@ -407,8 +406,7 @@ Pipe_Reg #(.size(171)) EX_MEM(
         alu_zero_MEM,
         writeReg_addr_MEM,
         aluSrc2_reg_MEM, 
-        branch_addr_MEM,
-		RF_outRT_MEM
+        branch_addr_MEM
     })
 );
 
@@ -421,7 +419,7 @@ assign PCSrc = Branch_c_MEM && alu_zero_MEM;
 Data_Memory DM(
         .clk_i(clk_i),
         .addr_i(aluResult_MEM),
-        .data_i(RF_outRT_MEM),
+        .data_i(aluSrc2_reg_MEM),
         .MemRead_i( MemRead_c_MEM),
         .MemWrite_i(MemWrite_c_MEM),
         .data_o(MemRead_data_MEM)        

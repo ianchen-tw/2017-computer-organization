@@ -31,7 +31,7 @@ always @(*) begin
     else if(
         WB_RegWrite
         & ( WB_RsgisterRd != 0)
-        & ( ~( MEM_RegWrite & (MEM_RegisterRd!=0 ) ) 
+        & ~( ( MEM_RegWrite & (MEM_RegisterRd!=0 ) ) 
                & MEM_RegisterRd != EX_RegisterRs )
         & ( WB_RsgisterRd == EX_RegisterRs )
     )   ForwardA = `FORWARD_FROM_WB;
@@ -50,7 +50,7 @@ always @(*) begin
     else if(
         WB_RegWrite
         & ( WB_RsgisterRd != 0)
-        & ( ~( MEM_RegWrite & (MEM_RegisterRd!=0 ) ) 
+        & ~( ( MEM_RegWrite & (MEM_RegisterRd!=0 ) ) 
                & MEM_RegisterRd != EX_RegisterRt )
         & ( WB_RsgisterRd == EX_RegisterRt )
     )   ForwardB = `FORWARD_FROM_WB;
