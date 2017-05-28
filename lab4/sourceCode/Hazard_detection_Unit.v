@@ -13,6 +13,7 @@ module Hazard_detection_Unit(
     input   MEM_Branch, 
 
     output  reg PCWrite,
+	output reg IF_ID_Write, 
     output  reg IF_Flush,
     output  reg ID_Flush,
 	output	reg EX_Flush
@@ -29,16 +30,19 @@ assign branch_misPredict = MEM_Branch ;
 always @(*)begin
 //PipeLine Stall  
   if( need_to_stall )begin // load use hazard
-	{IF_Flush,ID_Flush,EX_Flush} <= 3'b110;
+	{IF_Flush,ID_Flush,EX_Flush} <= 3'b010;
     PCWrite <= 0;  
+	IF_ID_Write <= 0; 
     end
   else if (branch_misPredict) begin // branch
 	{IF_Flush,ID_Flush,EX_Flush} <= 3'b111;
 	PCWrite <= 1;
+	IF_ID_Write <= 1; 
   end
 	else begin
 	{IF_Flush,ID_Flush,EX_Flush} <= 'b0;
 	PCWrite <= 1;
+	IF_ID_Write <= 1; 
 	end
 end
 

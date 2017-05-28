@@ -99,7 +99,7 @@ wire [32-1:0] immdt16_SE32_ID, immdt16_SE32_EX;
 
 wire [32-1:0] instr_ID;//values from instruction memory according to it's address
 wire [1:0]	ForwardA, ForwardB; 
-wire 		pcWrite,	alu_zero_EX,	alu_zero_MEM; 
+wire 		pcWrite,	IF_ID_Write,	alu_zero_EX,	alu_zero_MEM; 
 
 wire [4-1:0]      aluOpCode_EX;      //The operation code that ALU get from ALU_Control  
 wire [5-1:0]      writeReg_addr_EX,writeReg_addr_MEM, writeReg_addr_WB ;  //The address of the reg that need to be write back, if any.
@@ -149,8 +149,9 @@ Instr_Memory IM(
 
 Pipe_Reg #(.size(64)) IF_ID(
     .clk_i(clk_i),
-	.rst_i( rst_i),
-    //.rst_i( rst_i | ~IF_Flush), //connect to IF flush
+	//.rst_i( rst_i),
+    .rst_i( rst_i & ~IF_Flush), //connect to IF flush
+	.write_i( IF_ID_Write),
     .data_i({   
         pc_add4_IF,
         instr_IF
@@ -169,6 +170,7 @@ Hazard_detection_Unit Hazard_detection_Unit(
 	.EX_RegisterRt(instr_rt_EX),
 	.MEM_Branch(Branch_c_MEM),
 	.PCWrite(pcWrite),
+	.IF_ID_Write(IF_ID_Write),
 	.IF_Flush(IF_Flush),
 	.ID_Flush(ID_Flush),
 	.EX_Flush(EX_Flush)
@@ -221,8 +223,8 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
         MemWrite_c_ID
     }),
     .data1_i(3'b0),
-	.select_i(1'b0),
-    //.select_i(ID_Flush),
+	//.select_i(1'b0),
+    .select_i(ID_Flush),
     .data_o({
         RW_ID_muxOut,
         MR_ID_muxOut,
@@ -233,6 +235,7 @@ MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
 Pipe_Reg #(.size(165)) ID_EX(
     .clk_i(clk_i),
     .rst_i(rst_i),//connect to hazard detection unit after implemented it
+	.write_i(1'b1),
     .data_i({   
         //control signals
         AluSrc_c_ID,            //1
@@ -363,8 +366,8 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
         MemWrite_c_EX
     }),
     .data1_i(3'b0),
-	.select_i(1'b0),
-    //.select_i(EX_Flush),
+	//.select_i(1'b0),
+    .select_i(EX_Flush),
     .data_o({
         RW_EX_muxOut,
         MR_EX_muxOut,
@@ -375,6 +378,7 @@ MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
 Pipe_Reg #(.size(139)) EX_MEM(
     .clk_i(clk_i),
     .rst_i(rst_i),
+	.write_i(1'b1),
     .data_i({   
         //control signals
         Branch_c_EX,                //1
@@ -430,6 +434,7 @@ Data_Memory DM(
 Pipe_Reg #(.size(103)) MEM_WB(
     .clk_i(clk_i),
     .rst_i(rst_i),// not completed yet
+	.write_i(1'b1),
 	 .data_i({   
         //control signals
         MemToReg_c_MEM,             //1
