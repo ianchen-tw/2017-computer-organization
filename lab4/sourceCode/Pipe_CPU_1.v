@@ -31,6 +31,7 @@ ID stage
 
 //control signal
 wire RW_ID_muxOut,MR_ID_muxOut,MW_ID_muxOut;
+wire Branch_ID_muxOut;
     //EX
 wire AluSrc_c_ID;
 wire [4-1:0] AluOp_c_ID;
@@ -46,6 +47,7 @@ wire RegWrite_c_ID ;
 EX stage 
 ****/
 wire RW_EX_muxOut,MR_EX_muxOut,MW_EX_muxOut;
+wire Branch_EX_muxOut;
 //control signal
     //EX
 wire AluSrc_c_EX;
@@ -168,7 +170,7 @@ Hazard_detection_Unit Hazard_detection_Unit(
 	.ID_RegisterRs(instr_rs_ID),
 	.ID_RegisterRt(instr_rt_ID),
 	.EX_RegisterRt(instr_rt_EX),
-	.MEM_Branch(Branch_c_MEM),
+	.MEM_Branch(PCSrc),
 	.PCWrite(pcWrite),
 	.IF_ID_Write(IF_ID_Write),
 	.IF_Flush(IF_Flush),
@@ -216,19 +218,21 @@ Sign_Extend Sign_Extend(
 
 //The instructions berecome nop 
 //after clear these three control signal
-MUX_2to1 #(.size(3)) ID_EX_pipeLineSrc(
+MUX_2to1 #(.size(4)) ID_EX_pipeLineSrc(
     .data0_i({
         RegWrite_c_ID,
         MemRead_c_ID,
-        MemWrite_c_ID
+        MemWrite_c_ID,
+		Branch_c_ID
     }),
-    .data1_i(3'b0),
+    .data1_i(4'b0),
 	//.select_i(1'b0),
     .select_i(ID_Flush),
     .data_o({
         RW_ID_muxOut,
         MR_ID_muxOut,
-        MW_ID_muxOut
+        MW_ID_muxOut,
+		Branch_ID_muxOut
     })
 );
 
@@ -241,7 +245,7 @@ Pipe_Reg #(.size(165)) ID_EX(
         AluSrc_c_ID,            //1
         AluOp_c_ID,             //4
         RegDst_c_ID,            //1
-        Branch_c_ID,            //1
+        Branch_ID_muxOut,            //1
         MemToReg_c_ID,          //1
         
         RW_ID_muxOut,           //1
@@ -359,19 +363,21 @@ ALU ALU(//need to know PC +4
 
 //EX stage END 
 
-MUX_2to1 #(.size(3)) EX_MEM_pipeLineSrc(
+MUX_2to1 #(.size(4)) EX_MEM_pipeLineSrc(
     .data0_i({
         RegWrite_c_EX,
         MemRead_c_EX,
-        MemWrite_c_EX
+        MemWrite_c_EX,
+		Branch_c_EX
     }),
-    .data1_i(3'b0),
+    .data1_i(4'b0),
 	//.select_i(1'b0),
     .select_i(EX_Flush),
     .data_o({
         RW_EX_muxOut,
         MR_EX_muxOut,
-        MW_EX_muxOut
+        MW_EX_muxOut,
+		Branch_EX_muxOut
     })
 );
 
@@ -381,7 +387,7 @@ Pipe_Reg #(.size(139)) EX_MEM(
 	.write_i(1'b1),
     .data_i({   
         //control signals
-        Branch_c_EX,                //1
+        Branch_EX_muxOut,                //1
         MemToReg_c_EX,              //1
         
         RW_EX_muxOut,               //1
