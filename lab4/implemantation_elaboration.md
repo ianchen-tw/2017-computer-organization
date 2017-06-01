@@ -65,7 +65,7 @@
 
 # 整體架構寫法
     把內部模組依據stage的位置編排放置，這樣比較好維護，且在每個stage的變數上分別註記是哪個stage所使用到的資料，這樣才不會有所混淆。
-    
+
 
 
 # debug過程 
@@ -76,7 +76,7 @@
 
 3.更改RegFile 模組，讓同一個clock可以同時讀取跟寫入而不會有資料問題
 
-4.IF_ID的 rst訊號比較特別，是active low reset 對應到的邏輯式 為rst_i & ~IF_Flush ,其中有一個訊號掉下來整個輸入就要掉下來，這
+4.IF_ID的 rst訊號比較特別，是active low reset 對應到的邏輯式 為rst_i & ~IF_Flush ,其中有一個訊號掉下來整個輸入就要掉下來。
 
 5.把 hazard dection 的 branch 輸入接錯了，接成 branch_MEM 而不是 PCSrc, 導致只要有branch就會flush
 
