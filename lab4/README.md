@@ -2,6 +2,9 @@
 
  implementing a simple version 5-stage pipelined CPU
 
+![](./lab4_arichitecture.png)
+
+[implementation_elaboration](./implementation_elaboration.md)
 ## basic instructions supported
 
 + ADD
