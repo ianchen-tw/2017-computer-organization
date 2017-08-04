@@ -1,6 +1,0 @@
-verilog work "sourceCode/half_adder.v"
-verilog work "sourceCode/full_adder.v"
-verilog work "sourceCode/compare.v"
-verilog work "sourceCode/alu_top.v"
-verilog work "sourceCode/alu_bottom.v"
-verilog work "sourceCode/alu.v"

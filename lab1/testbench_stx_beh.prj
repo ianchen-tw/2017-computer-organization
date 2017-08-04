@@ -1,6 +1,0 @@
-verilog isim_temp "sourceCode/half_adder.v"
-verilog isim_temp "sourceCode/full_adder.v"
-verilog isim_temp "sourceCode/alu_top.v"
-verilog isim_temp "sourceCode/alu.v"
-verilog isim_temp "testbench/basic_data/testbench.v"
-verilog isim_temp "C:/Xilinx/14.7/ISE_DS/ISE//verilog/src/glbl.v"

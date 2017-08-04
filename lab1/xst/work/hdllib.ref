@@ -1,6 +1,0 @@
-MO alu_bottom NULL sourceCode/alu_bottom.v vlg72/alu__bottom.bin 1490330980
-MO half_adder NULL sourceCode/half_adder.v vlg5A/half__adder.bin 1490330980
-MO alu_top NULL sourceCode/alu_top.v vlg3C/alu__top.bin 1490330980
-MO full_adder NULL sourceCode/full_adder.v vlg5A/full__adder.bin 1490330980
-MO compare NULL sourceCode/compare.v vlg5B/compare.bin 1490330980
-MO alu NULL sourceCode/alu.v vlg0A/alu.bin 1490330980
