@@ -3,7 +3,9 @@
 
 **1. The Source Codes are in the "sourceCode" directory**
 
-**2. This project uses Xilinx ISE 14.7**
+# Architecture Diagrams
+![ALU.png](./ALU.png)
+![small_modules](./small_module.png)
 
 ## ALU I/O
 ```Verilog
@@ -51,4 +53,4 @@ __Bonus_instruction_set__
 |Sne|Set not equal|0111_100|
 
 ## Specification:
-1. Start to work after rst_n 
+1. Start to work after rst_n raised 
